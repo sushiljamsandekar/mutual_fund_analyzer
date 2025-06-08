@@ -1,0 +1,119 @@
+/* Custom styles for Mutual Fund Analyzer */
+
+/* General styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Header styles */
+.navbar-brand {
+    font-weight: 600;
+}
+
+/* Card styles */
+.card {
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Button styles */
+.btn {
+    border-radius: 0.25rem;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+/* Form styles */
+.form-control {
+    border-radius: 0.25rem;
+    padding: 0.5rem 1rem;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Chart container */
+.chart-container {
+    position: relative;
+    margin: auto;
+    height: 300px;
+    width: 100%;
+}
+
+/* Loading animation */
+.loading-spinner {
+    display: inline-block;
+    width: 2rem;
+    height: 2rem;
+    border: 0.25rem solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #0d6efd;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+}
+
+/* Fund performance indicators */
+.performance-positive {
+    color: #198754;
+}
+
+.performance-negative {
+    color: #dc3545;
+}
+
+/* Category cards */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+/* Cache status indicator */
+.cache-status {
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.cache-status.active {
+    background-color: #d1e7dd;
+    color: #0f5132;
+}
+
+.cache-status.inactive {
+    background-color: #f8d7da;
+    color: #842029;
+}

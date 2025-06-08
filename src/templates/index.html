@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Indian Mutual Fund Analyzer - Home{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold text-primary">Indian Mutual Fund Analyzer</h1>
+            <p class="lead">Analyze and compare mutual funds with benchmark indices and category peers</p>
+        </div>
+
+        <div class="row g-4 py-3">
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fas fa-search fa-3x text-primary mb-3"></i>
+                        <h3 class="card-title">Fund Analysis</h3>
+                        <p class="card-text">Analyze a specific mutual fund's performance against the NIFTY 50 benchmark index. Compare returns across different time periods.</p>
+                        <a href="/fund-analysis" class="btn btn-primary mt-3">Analyze Fund</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="fas fa-list-ol fa-3x text-primary mb-3"></i>
+                        <h3 class="card-title">Category Analysis</h3>
+                        <p class="card-text">Find the top performing funds within a specific category based on 5-year returns. Compare funds within the same investment category.</p>
+                        <a href="/category-analysis" class="btn btn-primary mt-3">Analyze Category</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-5 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title">How It Works</h3>
+                <div class="row g-4 mt-2">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="bg-light rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
+                                <span class="h4 mb-0">1</span>
+                            </div>
+                            <h5>Select Analysis Type</h5>
+                            <p class="text-muted">Choose between analyzing a specific fund or exploring top funds in a category</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="bg-light rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
+                                <span class="h4 mb-0">2</span>
+                            </div>
+                            <h5>Enter Fund Details</h5>
+                            <p class="text-muted">Search for a fund by name or select a category from the available options</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="bg-light rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 60px; height: 60px;">
+                                <span class="h4 mb-0">3</span>
+                            </div>
+                            <h5>View Analysis Results</h5>
+                            <p class="text-muted">Get detailed performance metrics, comparisons, and visualizations</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-5 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title">Data Sources</h3>
+                <p>This application uses data from the following sources:</p>
+                <ul>
+                    <li><strong>Mutual Fund Data:</strong> mfapi.in (NAV history and fund metadata)</li>
+                    <li><strong>Benchmark Index:</strong> Yahoo Finance (NIFTY 50 historical data)</li>
+                </ul>
+                <p class="text-muted small">Data is cached to improve performance but can be refreshed on demand.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
