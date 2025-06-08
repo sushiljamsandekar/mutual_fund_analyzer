@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+
+{% block title %}Category Analysis - Indian Mutual Fund Analyzer{% endblock %}
+
+{% block extra_css %}
+<style>
+    .loading {
+        display: none;
+        text-align: center;
+        padding: 20px;
+    }
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+    .result-section {
+        display: none;
+    }
+    .category-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    .category-list {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    .top-fund-card {
+        border-left: 4px solid transparent;
+    }
+    .top-fund-card.rank-1 {
+        border-left-color: #ffc107;
+    }
+    .top-fund-card.rank-2 {
+        border-left-color: #6c757d;
+    }
+    .top-fund-card.rank-3 {
+        border-left-color: #cd7f32;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <h1 class="mb-4">Category Analysis</h1>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Select a Mutual Fund Category</h5>
+                <p class="text-muted">Choose a category to find the top performing funds based on 5-year returns.</p>
+                
+                <div class="mb-3">
+                    <div class="input-group">
+                        <input type="text" id="categorySearch" class="form-control" placeholder="Filter categories...">
+                        <button id="refreshCategoriesBtn" class="btn btn-outline-secondary" title="Refresh Categories">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="categoriesContainer" class="category-list">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span class="ms-2">Loading categories...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="loadingSection" class="loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Analyzing category and ranking funds...</p>
+            <p class="text-muted small">This may take a moment as we analyze multiple funds</p>
+        </div>
+        
+        <div id="resultSection" class="result-section">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h3 id="categoryName" class="card-title mb-1">Category Name</h3>
+                    <p class="text-muted mb-0">Top funds based on 5-year returns</p>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Top Performing Funds</h5>
+                </div>
+                <div class="card-body">
+                    <div id="topFundsContainer">
+                        <!-- Top funds will be populated here -->
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span id="fundsAnalyzedInfo" class="text-muted small"></span>
+                        <button id="viewMoreBtn" class="btn btn-sm btn-outline-primary" style="display: none;">
+                            View All Funds
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <button id="newAnalysisBtn" class="btn btn-outline-primary">
+                    <i class="fas fa-redo me-2"></i>New Analysis
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const categorySearch = document.getElementById('categorySearch');
+        const refreshCategoriesBtn = document.getElementById('refreshCategoriesBtn');
+        const categoriesContainer = document.getElementById('categoriesContainer');
+        const loadingSection = document.getElementById('loadingSection');
+        const resultSection = document.getElementById('resultSection');
+        const newAnalysisBtn = document.getElementById('newAnalysisBtn');
+        
+        // Load categories
+        loadCategories();
+        
+        function loadCategories(forceRefresh = false) {
+            categoriesContainer.innerHTML = `
+                <div class="text-center py-3">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                    <span class="ms-2">Loading categories...</span>
+                </div>
+            `;
+            
+            const url = forceRefresh ? '/api/categories?force_refresh=true' : '/api/categories';
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success' && data.categories && data.categories.length > 0) {
+                        renderCategories(data.categories);
+                    } else {
+                        categoriesContainer.innerHTML = '<div class="alert alert-info">No categories found. Please try refreshing.</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    categoriesContainer.innerHTML = '<div class="alert alert-danger">Error loading categories. Please try again.</div>';
+                });
+        }
+        
+        function renderCategories(categories) {
+            let html = '<div class="row g-3">';
+            
+            categories.forEach(category => {
+                html += `
+                    <div class="col-md-6 category-item" data-category="${category}">
+                        <div class="card category-card shadow-sm h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-0">${category}</h6>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            categoriesContainer.innerHTML = html;
+            
+            // Add click event to category cards
+            document.querySelectorAll('.category-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const category = this.getAttribute('data-category');
+                    analyzeCategory(category);
+                });
+            });
+        }
+        
+        // Filter categories
+        categorySearch.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            document.querySelectorAll('.category-item').forEach(item => {
+                const category = item.getAttribute('data-category').toLowerCase();
+                if (category.includes(searchTerm)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+        
+        // Refresh categories
+        refreshCategoriesBtn.addEventListener('click', function() {
+            loadCategories(true);
+        });
+        
+        // Analyze category
+        function analyzeCategory(category) {
+            // Hide categories and show loading
+            loadingSection.style.display = 'block';
+            resultSection.style.display = 'none';
+            
+            // Encode category name for URL
+            const encodedCategory = encodeURIComponent(category);
+            
+            fetch(`/api/analyze/category/${encodedCategory}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        displayResults(data);
+                    } else {
+                        alert('Error: ' + (data.message || 'Failed to analyze category'));
+                        loadingSection.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error analyzing category. Please try again.');
+                    loadingSection.style.display = 'none';
+                });
+        }
+        
+        // Display analysis results
+        function displayResults(data) {
+            // Update category name
+            document.getElementById('categoryName').textContent = data.category;
+            
+            // Create top funds
+            const topFundsContainer = document.getElementById('topFundsContainer');
+            let topFundsHtml = '';
+            
+            if (data.top_funds && data.top_funds.length > 0) {
+                data.top_funds.forEach(fund => {
+                    const rankClass = `rank-${fund.rank}`;
+                    const rankBadge = getRankBadge(fund.rank);
+                    
+                    topFundsHtml += `
+                        <div class="card top-fund-card ${rankClass} mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h5 class="card-title mb-1">${fund.name}</h5>
+                                        <p class="text-muted mb-0">Code: ${fund.code}</p>
+                                    </div>
+                                    <div class="text-end">
+                                        ${rankBadge}
+                                        <h4 class="mt-2">${fund.return}%</h4>
+                                        <p class="text-muted mb-0 small">${data.ranking_period} Return</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                topFundsHtml = '<div class="alert alert-info">No top funds found for this category.</div>';
+            }
+            
+            topFundsContainer.innerHTML = topFundsHtml;
+            
+            // Update funds analyzed info
+            const fundsAnalyzedInfo = document.getElementById('fundsAnalyzedInfo');
+            fundsAnalyzedInfo.textContent = `Analyzed ${data.funds_analyzed} out of ${data.total_funds_in_category} funds in this category`;
+            
+            // Show results
+            loadingSection.style.display = 'none';
+            resultSection.style.display = 'block';
+        }
+        
+        function getRankBadge(rank) {
+            if (rank === 1) {
+                return '<span class="badge bg-warning text-dark"><i class="fas fa-trophy me-1"></i>1st</span>';
+            } else if (rank === 2) {
+                return '<span class="badge bg-secondary"><i class="fas fa-medal me-1"></i>2nd</span>';
+            } else if (rank === 3) {
+                return '<span class="badge" style="background-color: #cd7f32;"><i class="fas fa-award me-1"></i>3rd</span>';
+            }
+            return `<span class="badge bg-light text-dark">${rank}th</span>`;
+        }
+        
+        // New analysis button
+        newAnalysisBtn.addEventListener('click', function() {
+            resultSection.style.display = 'none';
+            categorySearch.value = '';
+            // Show all categories again
+            document.querySelectorAll('.category-item').forEach(item => {
+                item.style.display = '';
+            });
+        });
+    });
+</script>
+{% endblock %}

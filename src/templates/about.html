@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block title %}About - Indian Mutual Fund Analyzer{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <h1 class="mb-4">About the Mutual Fund Analyzer</h1>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h3 class="card-title">Overview</h3>
+                <p>The Indian Mutual Fund Analyzer is a web application designed to help investors analyze and compare mutual funds based on historical performance data. The tool provides two main analysis features:</p>
+                <ul>
+                    <li><strong>Fund Analysis:</strong> Compare a specific mutual fund against the NIFTY 50 benchmark index</li>
+                    <li><strong>Category Analysis:</strong> Find the top performing funds within a specific category</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h3 class="card-title mb-0">Data Sources</h3>
+            </div>
+            <div class="card-body">
+                <p>This application uses data from the following sources:</p>
+                <ul>
+                    <li><strong>Mutual Fund Data:</strong> <a href="https://www.mfapi.in/" target="_blank">mfapi.in</a> - Provides NAV history and fund metadata</li>
+                    <li><strong>Benchmark Index:</strong> Yahoo Finance - Provides NIFTY 50 historical data</li>
+                </ul>
+                <p>Data is cached to improve performance but can be refreshed on demand.</p>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h3 class="card-title mb-0">Methodology</h3>
+            </div>
+            <div class="card-body">
+                <h5>Return Calculation</h5>
+                <p>The application calculates Compound Annual Growth Rate (CAGR) for various time periods:</p>
+                <ul>
+                    <li><strong>1-Year Return:</strong> CAGR over the past 1 year</li>
+                    <li><strong>3-Year Return:</strong> CAGR over the past 3 years</li>
+                    <li><strong>5-Year Return:</strong> CAGR over the past 5 years</li>
+                    <li><strong>10-Year Return:</strong> CAGR over the past 10 years (if data available)</li>
+                </ul>
+                
+                <h5>CAGR Formula</h5>
+                <p>The CAGR is calculated using the following formula:</p>
+                <div class="bg-light p-3 rounded">
+                    <p class="mb-0">CAGR = (Ending NAV / Beginning NAV)^(1 / Number of Years) - 1</p>
+                </div>
+                
+                <h5 class="mt-4">Category Analysis</h5>
+                <p>For category analysis, funds are ranked based on their 5-year CAGR. The application analyzes a sample of funds within each category to determine the top performers.</p>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h3 class="card-title mb-0">Cache Status</h3>
+            </div>
+            <div class="card-body">
+                <div id="cacheStatus">
+                    <div class="text-center">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                        <span class="ms-2">Checking cache status...</span>
+                    </div>
+                </div>
+                
+                <div class="mt-3 text-center">
+                    <button id="refreshCacheBtn" class="btn btn-outline-primary">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh Cache
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h3 class="card-title mb-0">Limitations</h3>
+            </div>
+            <div class="card-body">
+                <ul>
+                    <li><strong>Expense Ratio:</strong> Not included due to API limitations</li>
+                    <li><strong>Risk Metrics:</strong> Standard deviation, Sharpe ratio, etc., are not calculated</li>
+                    <li><strong>Benchmark Flexibility:</strong> Currently hardcoded to NIFTY 50</li>
+                    <li><strong>Category Analysis:</strong> Based on a sample of funds, not the entire universe</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cacheStatus = document.getElementById('cacheStatus');
+        const refreshCacheBtn = document.getElementById('refreshCacheBtn');
+        
+        // Check cache status
+        checkCacheStatus();
+        
+        function checkCacheStatus() {
+            fetch('/api/cache/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        let html = '';
+                        
+                        if (data.cache_exists) {
+                            const timestamp = new Date(data.timestamp);
+                            const formattedDate = timestamp.toLocaleString();
+                            
+                            html = `
+                                <div class="alert alert-success">
+                                    <h5><i class="fas fa-check-circle me-2"></i>Cache is active</h5>
+                                    <p class="mb-0">Last updated: ${formattedDate}</p>
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Fund List:</strong> ${data.has_all_funds ? 'Cached' : 'Not cached'}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Categories:</strong> ${data.has_categories ? 'Cached' : 'Not cached'}</p>
+                                        </div>
+                                    </div>
+                                    <p class="mb-0 small text-muted">Sample size: ${data.prefetch_sample_size || 'N/A'}</p>
+                                </div>
+                            `;
+                        } else {
+                            html = `
+                                <div class="alert alert-warning">
+                                    <h5><i class="fas fa-exclamation-triangle me-2"></i>Cache is not active</h5>
+                                    <p class="mb-0">No cache found or cache has expired. Click the refresh button to create a new cache.</p>
+                                </div>
+                            `;
+                        }
+                        
+                        cacheStatus.innerHTML = html;
+                    } else {
+                        cacheStatus.innerHTML = `
+                            <div class="alert alert-danger">
+                                <h5><i class="fas fa-times-circle me-2"></i>Error checking cache status</h5>
+                                <p class="mb-0">Could not determine cache status. Please try again.</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    cacheStatus.innerHTML = `
+                        <div class="alert alert-danger">
+                            <h5><i class="fas fa-times-circle me-2"></i>Error checking cache status</h5>
+                            <p class="mb-0">Could not connect to the server. Please try again.</p>
+                        </div>
+                    `;
+                });
+        }
+        
+        // Refresh cache
+        refreshCacheBtn.addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Refreshing...';
+            
+            fetch('/api/cache/refresh', {
+                method: 'POST'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('Cache refreshed successfully!');
+                        checkCacheStatus();
+                    } else {
+                        alert('Error: ' + (data.message || 'Failed to refresh cache'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error refreshing cache. Please try again.');
+                })
+                .finally(() => {
+                    refreshCacheBtn.disabled = false;
+                    refreshCacheBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Refresh Cache';
+                });
+        });
+    });
+</script>
+{% endblock %}
